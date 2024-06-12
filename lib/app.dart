@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pikpo_video_conference/screens/home_screen.dart';
+import 'package:pikpo_video_conference/screens/login/login_screen.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const HomeScreen(),
+      home: const LoginScreen(),
     );
   }
 }
