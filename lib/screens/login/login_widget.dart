@@ -56,40 +56,44 @@ class ButtonRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        ElevatedButton(
-          onPressed: on1To1Pressed,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.secondaryColor,
-            fixedSize: const Size(160, 48),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+    return Flexible(
+      flex: 1,
+      child: Wrap(
+        spacing: 20,
+        runSpacing: 9,
+        children: [
+          ElevatedButton(
+            onPressed: on1To1Pressed,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.secondaryColor,
+              fixedSize: const Size(150, 48),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text(
+              "1-1",
+              style: TextStyle(
+                  color: AppColors.textColor, fontWeight: FontWeight.w700),
             ),
           ),
-          child: const Text(
-            "1-1",
-            style: TextStyle(
-                color: AppColors.textColor, fontWeight: FontWeight.w700),
-          ),
-        ),
-        const Spacer(),
-        ElevatedButton(
-          onPressed: () {},
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.secondaryColor,
-            fixedSize: const Size(160, 48),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+          ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.secondaryColor,
+              fixedSize: const Size(150, 48),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text(
+              "Group",
+              style: TextStyle(
+                  color: AppColors.textColor, fontWeight: FontWeight.w700),
             ),
           ),
-          child: const Text(
-            "Group",
-            style: TextStyle(
-                color: AppColors.textColor, fontWeight: FontWeight.w700),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -112,10 +116,14 @@ class UsernameTextField extends StatelessWidget {
       controller: controller,
       style: const TextStyle(color: AppColors.textColor),
       decoration: InputDecoration(
+        hoverColor: Colors.transparent,
         suffixIcon: ElevatedButton(
             key: const Key("clearUsernameButton"),
-            style:
-                ElevatedButton.styleFrom(backgroundColor: Colors.transparent),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                overlayColor: Colors.transparent,
+                padding: EdgeInsets.all(0),
+                shape: CircleBorder()),
             onPressed: onClearPressed,
             child: const Icon(
               Icons.cancel_rounded,
