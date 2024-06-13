@@ -22,6 +22,14 @@ class _LoginWidgetState extends State<LoginWidget> {
     _controller.usernameController.clear();
   }
 
+  void _routeToCallScreen() {
+    final usernameText = _controller.usernameController.text;
+    if (usernameText.isNotEmpty) {
+      Navigator.pushNamed(context, '/call',
+          arguments: _controller.usernameController.text);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -34,7 +42,7 @@ class _LoginWidgetState extends State<LoginWidget> {
           UsernameTextField(
               controller: _controller.usernameController,
               onClearPressed: _onClearUsername),
-          const ButtonRow(),
+          ButtonRow(on1To1Pressed: _routeToCallScreen),
         ],
       ),
     );
@@ -43,16 +51,15 @@ class _LoginWidgetState extends State<LoginWidget> {
 
 //Button  Group Widget
 class ButtonRow extends StatelessWidget {
-  const ButtonRow({
-    super.key,
-  });
+  final VoidCallback on1To1Pressed;
+  const ButtonRow({super.key, required this.on1To1Pressed});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         ElevatedButton(
-          onPressed: () {},
+          onPressed: on1To1Pressed,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.secondaryColor,
             fixedSize: const Size(160, 48),

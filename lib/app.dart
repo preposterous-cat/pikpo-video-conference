@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pikpo_video_conference/screens/call/call_screen.dart';
 import 'package:pikpo_video_conference/screens/login/login_screen.dart';
 
 class MyApp extends StatelessWidget {
@@ -10,10 +11,22 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Pikpo Video Conference',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const LoginScreen(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const LoginScreen(),
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name == '/call') {
+          final username = settings.arguments as String;
+          return MaterialPageRoute(
+            builder: (context) => CallScreen(username: username),
+          );
+        }
+        assert(false, 'Need to implement ${settings.name}');
+        return null;
+      },
     );
   }
 }
