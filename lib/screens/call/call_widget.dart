@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pikpo_video_conference/theme/app_colors.dart';
 
+import 'user_list_widget.dart';
+
 class CallWidget extends StatefulWidget {
   final String username;
   const CallWidget({super.key, required this.username});
@@ -11,6 +13,42 @@ class CallWidget extends StatefulWidget {
 }
 
 class _CallWidgetState extends State<CallWidget> {
+  bool isMicActive = true;
+  bool isVideoActive = false;
+  bool isTranscriptActive = false;
+  bool isChatActive = false;
+  bool isShareScreenActive = false;
+
+  void _onMicHandler() {
+    setState(() {
+      isMicActive = !isMicActive;
+    });
+  }
+
+  void _onVideoHandler() {
+    setState(() {
+      isVideoActive = !isVideoActive;
+    });
+  }
+
+  void _onTranscriptHandler() {
+    setState(() {
+      isTranscriptActive = !isTranscriptActive;
+    });
+  }
+
+  void _onChatHandler() {
+    setState(() {
+      isChatActive = !isChatActive;
+    });
+  }
+
+  void _onShareScreenHandler() {
+    setState(() {
+      isShareScreenActive = !isShareScreenActive;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -20,29 +58,45 @@ class _CallWidgetState extends State<CallWidget> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           NavbarWidget(widget: widget),
-          Expanded(
-            flex: 5,
-            child: ShareScreenWidget(),
-          ),
-          Expanded(
-            flex: 3,
-            child: UserListWidget(),
-          ),
-          Expanded(
+          // const Flexible(
+          //   flex: 6,
+          //   child: ShareScreenWidget(),
+          // ),
+          Flexible(
             flex: 4,
-            child: TranscriptWidget(),
+            child: UserListWidget(stateList: {"isMicActive": isMicActive}),
           ),
-          const CallControlWidget()
+          // const Flexible(
+          //   flex: 5,
+          //   child: TranscriptWidget(),
+          // ),
+          CallControlWidget(handlerList: {
+            "onMicPressed": _onMicHandler,
+            "onVideoPressed": _onVideoHandler,
+            "onTranscriptPressed": _onTranscriptHandler,
+            "onChatPressed": _onChatHandler,
+            "onShareScreenPressed": _onShareScreenHandler,
+          }, statusList: {
+            "isMicActive": isMicActive,
+            "isVideoActive": isVideoActive,
+            "isTranscriptActive": isTranscriptActive,
+            "isChatActive": isChatActive,
+            "isShareScreenActive": isShareScreenActive
+          })
         ],
       ),
     );
   }
 }
 
+enum ControlButtonType { mic, video, transcript, chat, sharescreen }
+
 class CallControlWidget extends StatelessWidget {
-  const CallControlWidget({
-    super.key,
-  });
+  final Map<String, dynamic> handlerList;
+  final Map<String, dynamic> statusList;
+
+  const CallControlWidget(
+      {super.key, required this.handlerList, required this.statusList});
 
   @override
   Widget build(BuildContext context) {
@@ -52,73 +106,56 @@ class CallControlWidget extends StatelessWidget {
         spacing: 20,
         runSpacing: 8,
         children: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.all(0),
-              minimumSize: const Size(50, 50),
-              shape: const CircleBorder(),
-              backgroundColor: AppColors.primaryVariant,
-            ),
-            onPressed: () {},
-            child: const Icon(
+          ControlButton(
+            icon: const Icon(
               Icons.mic_none_rounded,
               color: AppColors.textColor,
             ),
+            onPressed: handlerList["onMicPressed"],
+            type: ControlButtonType.mic,
+            isActive: statusList["isMicActive"],
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.all(0),
-              minimumSize: const Size(50, 50),
-              shape: const CircleBorder(),
-              backgroundColor: AppColors.primaryVariant,
-            ),
-            onPressed: () {},
-            child: const Icon(
+          ControlButton(
+            icon: const Icon(
               Icons.videocam_outlined,
               color: AppColors.textColor,
             ),
+            onPressed: handlerList["onVideoPressed"],
+            type: ControlButtonType.video,
+            isActive: statusList["isVideoActive"],
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.all(0),
-              minimumSize: const Size(50, 50),
-              shape: const CircleBorder(),
-              backgroundColor: AppColors.primaryVariant,
-            ),
-            onPressed: () {},
-            child: const Text(
+          ControlButton(
+            icon: Text(
               "T",
               style: TextStyle(
-                  color: AppColors.textColor, fontWeight: FontWeight.w600),
+                  color: statusList["isTranscriptActive"]
+                      ? AppColors.backgroundColor
+                      : AppColors.textColor,
+                  fontWeight: FontWeight.w600),
             ),
+            onPressed: handlerList["onTranscriptPressed"],
+            type: ControlButtonType.transcript,
+            isActive: statusList["isTranscriptActive"],
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.all(0),
-              minimumSize: const Size(50, 50),
-              shape: const CircleBorder(),
-              backgroundColor: AppColors.primaryVariant,
-            ),
-            onPressed: () {},
-            child: SvgPicture.asset(
+          ControlButton(
+            icon: SvgPicture.asset(
               'assets/images/sketch.svg', // Path to your SVG
               width: 18,
               height: 14.19,
               color: AppColors.textColor,
             ),
+            onPressed: handlerList["onChatPressed"],
+            type: ControlButtonType.chat,
+            isActive: statusList["isChatActive"],
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.all(0),
-              minimumSize: const Size(50, 50),
-              shape: const CircleBorder(),
-              backgroundColor: AppColors.primaryVariant,
-            ),
-            onPressed: () {},
-            child: const Icon(
+          ControlButton(
+            icon: const Icon(
               Icons.present_to_all_rounded,
               color: AppColors.textColor,
             ),
+            onPressed: handlerList["onShareScreenPressed"],
+            type: ControlButtonType.sharescreen,
+            isActive: statusList["isShareScreenActive"],
           ),
         ],
       ),
@@ -126,192 +163,102 @@ class CallControlWidget extends StatelessWidget {
   }
 }
 
-class TranscriptWidget extends StatelessWidget {
-  const TranscriptWidget({
-    super.key,
-  });
+class ControlButton extends StatelessWidget {
+  final Widget icon;
+  final VoidCallback onPressed;
+  final ControlButtonType type;
+  final bool isActive;
+
+  const ControlButton(
+      {super.key,
+      required this.icon,
+      required this.onPressed,
+      required this.type,
+      required this.isActive});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-          color: AppColors.primaryVariant,
-          borderRadius: BorderRadius.circular(20)),
-      width: MediaQuery.of(context).size.width,
-      child: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Transcript",
-                  style: TextStyle(color: AppColors.textColor),
-                ),
-                Icon(
-                  Icons.open_in_full_rounded,
-                  color: AppColors.textColor,
-                  size: 20,
-                )
-              ],
-            )
-          ],
+    Color backgroundColor = AppColors.primaryVariant;
+    if (type == ControlButtonType.transcript && isActive) {
+      backgroundColor = const Color(0xFFA9C9D5);
+    }
+    return Stack(
+      children: [
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.all(0),
+            minimumSize: const Size(50, 50),
+            shape: const CircleBorder(),
+            backgroundColor: backgroundColor,
+          ),
+          onPressed: onPressed,
+          child: icon,
         ),
-      ),
+        if (type == ControlButtonType.mic && !isActive)
+          IgnorePointer(
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.black.withOpacity(0.5),
+              ),
+              child: CustomPaint(
+                painter: DiagonalLinePainter(),
+              ),
+            ),
+          ),
+        if (type == ControlButtonType.video && !isActive)
+          IgnorePointer(
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.black.withOpacity(0.5),
+              ),
+              child: CustomPaint(
+                painter: DiagonalLinePainter(),
+              ),
+            ),
+          ),
+        if (type == ControlButtonType.sharescreen && !isActive)
+          IgnorePointer(
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.black.withOpacity(0.5),
+              ),
+              child: CustomPaint(
+                painter: DiagonalLinePainter(),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
 
-class UserListWidget extends StatelessWidget {
-  const UserListWidget({
-    super.key,
-  });
-
+class DiagonalLinePainter extends CustomPainter {
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 30),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        width: MediaQuery.of(context).size.width,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            // Calculate size based on available space
-            double textSize = constraints.maxHeight * 0.1; // 10% of height
-            double imageSize = constraints.maxHeight * 0.43; // 60% of height
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.red
+      ..strokeWidth = 2;
 
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 5),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Column(
-                    children: [
-                      Text(
-                        "Your Name",
-                        style: TextStyle(
-                          color: AppColors.textColor,
-                          fontSize: textSize,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      SizedBox(
-                        height: textSize *
-                            0.9, // Adjust space between text and image
-                      ),
-                      SizedBox(
-                        width: imageSize,
-                        height: imageSize * 1.7, // Maintain aspect ratio
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(
-                              imageSize * 0.5), // Make it circular
-                          child: Image.network(
-                            'https://www.siegemedia.com/wp-content/uploads/2020/12/business-blogs-that-work-03-barkbox.webp',
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: imageSize * 0.1, // Adjust spacing
-                      vertical: imageSize * 0.05,
-                    ),
-                    child: SvgPicture.asset(
-                      'assets/images/call.svg', // Path to your SVG
-                      fit: BoxFit.contain,
-                      width: textSize,
-                      height: textSize,
-                      color: AppColors.highlightColor,
-                    ),
-                  ),
-                  Column(
-                    children: [
-                      Text(
-                        "Your Name",
-                        style: TextStyle(
-                          color: AppColors.textColor,
-                          fontSize: textSize,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      SizedBox(
-                        height: textSize * 0.9,
-                      ),
-                      SizedBox(
-                        width: imageSize,
-                        height: imageSize * 1.7,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(imageSize * 0.5),
-                          child: Image.network(
-                            'https://www.siegemedia.com/wp-content/uploads/2020/12/business-blogs-that-work-03-barkbox.webp',
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                    ],
-                  )
-                ],
-              ),
-            );
-          },
-        ),
-      ),
+    // Draw a diagonal line
+    canvas.drawLine(
+      const Offset(10, 5),
+      Offset(size.width / 1.3, size.height / 1.1),
+      paint,
     );
   }
-}
-
-class ShareScreenWidget extends StatelessWidget {
-  const ShareScreenWidget({
-    super.key,
-  });
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: SizedBox(
-        width: MediaQuery.of(context).size.width,
-        height: 224,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20.0),
-              child: Image.network(
-                'https://www.siegemedia.com/wp-content/uploads/2020/12/business-blogs-that-work-03-barkbox.webp',
-                fit: BoxFit.cover,
-              ),
-            ),
-            Positioned(
-              top: 10,
-              right: 10,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.backgroundColor.withOpacity(0.1),
-                  shape: const CircleBorder(),
-                  padding: const EdgeInsets.all(0),
-                ),
-                onPressed: () {
-                  // Aksi yang ingin dilakukan saat tombol ditekan
-                },
-                child: const Icon(
-                  size: 20,
-                  Icons.open_in_full_outlined,
-                  color: Colors.white, // Warna ikon
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return false;
   }
 }
 
