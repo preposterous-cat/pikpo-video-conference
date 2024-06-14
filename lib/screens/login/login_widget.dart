@@ -18,6 +18,11 @@ class _LoginWidgetState extends State<LoginWidget> {
     super.dispose();
   }
 
+  @override
+  void initState() {
+    super.initState();
+  }
+
   void _onClearUsername() {
     _controller.usernameController.clear();
   }

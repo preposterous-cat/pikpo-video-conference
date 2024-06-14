@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:pikpo_video_conference/screens/call/share_screen_widget.dart';
+import 'package:pikpo_video_conference/screens/call/transcript_widget.dart';
 import 'package:pikpo_video_conference/theme/app_colors.dart';
+import 'package:pikpo_video_conference/widgets/custom_dialog_alert.dart';
 
 import 'user_list_widget.dart';
 
@@ -18,6 +21,32 @@ class _CallWidgetState extends State<CallWidget> {
   bool isTranscriptActive = false;
   bool isChatActive = false;
   bool isShareScreenActive = false;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  void _onDisconnectRoom() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return CustomDialogAlert(
+          title: "Warning",
+          content: "Are you sure you want to leave the room?",
+          onConfirm: () {
+            // Handle confirm action
+            Navigator.of(context).pop();
+            Navigator.of(context).pop();
+          },
+          onCancel: () {
+            // Handle cancel action
+            Navigator.of(context).pop();
+          },
+        );
+      },
+    );
+  }
 
   void _onMicHandler() {
     setState(() {
@@ -57,19 +86,31 @@ class _CallWidgetState extends State<CallWidget> {
         direction: Axis.vertical,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          NavbarWidget(widget: widget),
-          // const Flexible(
-          //   flex: 6,
-          //   child: ShareScreenWidget(),
-          // ),
-          Flexible(
-            flex: 4,
-            child: UserListWidget(stateList: {"isMicActive": isMicActive}),
+          NavbarWidget(
+            widget: widget,
+            onDisconnectPressed: _onDisconnectRoom,
           ),
-          // const Flexible(
-          //   flex: 5,
-          //   child: TranscriptWidget(),
-          // ),
+          if (isShareScreenActive)
+            const Flexible(
+              flex: 6,
+              child: ShareScreenWidget(),
+            ),
+          Flexible(
+            flex: !isShareScreenActive && !isTranscriptActive
+                ? 2
+                : 4, //Adjust flex to fit screen based on Share Screen and Transcript
+            child: UserListWidget(statusList: {
+              "isMicActive": isMicActive,
+              "isVideoActive": isVideoActive,
+              "isTranscriptActive": isTranscriptActive,
+              "isShareScreenActive": isShareScreenActive
+            }),
+          ),
+          if (isTranscriptActive)
+            const Flexible(
+              flex: 5,
+              child: TranscriptWidget(),
+            ),
           CallControlWidget(handlerList: {
             "onMicPressed": _onMicHandler,
             "onVideoPressed": _onVideoHandler,
@@ -131,7 +172,8 @@ class CallControlWidget extends StatelessWidget {
                   color: statusList["isTranscriptActive"]
                       ? AppColors.backgroundColor
                       : AppColors.textColor,
-                  fontWeight: FontWeight.w600),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 20),
             ),
             onPressed: handlerList["onTranscriptPressed"],
             type: ControlButtonType.transcript,
@@ -141,7 +183,7 @@ class CallControlWidget extends StatelessWidget {
             icon: SvgPicture.asset(
               'assets/images/sketch.svg', // Path to your SVG
               width: 18,
-              height: 14.19,
+              height: 18.19,
               color: AppColors.textColor,
             ),
             onPressed: handlerList["onChatPressed"],
@@ -222,7 +264,7 @@ class ControlButton extends StatelessWidget {
               ),
             ),
           ),
-        if (type == ControlButtonType.sharescreen && !isActive)
+        if (type == ControlButtonType.sharescreen && isActive)
           IgnorePointer(
             child: Container(
               width: 50,
@@ -263,12 +305,11 @@ class DiagonalLinePainter extends CustomPainter {
 }
 
 class NavbarWidget extends StatelessWidget {
-  const NavbarWidget({
-    super.key,
-    required this.widget,
-  });
+  const NavbarWidget(
+      {super.key, required this.widget, required this.onDisconnectPressed});
 
   final CallWidget widget;
+  final VoidCallback onDisconnectPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -305,7 +346,7 @@ class NavbarWidget extends StatelessWidget {
           ],
         ),
         ElevatedButton(
-          onPressed: () {},
+          onPressed: onDisconnectPressed,
           style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
               fixedSize: const Size(24, 24),

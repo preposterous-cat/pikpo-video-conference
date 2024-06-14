@@ -3,17 +3,20 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pikpo_video_conference/theme/app_colors.dart';
 
 class UserListWidget extends StatelessWidget {
-  final Map<String, dynamic> stateList;
-  const UserListWidget({super.key, required this.stateList});
+  final Map<String, dynamic> statusList;
+  const UserListWidget({super.key, required this.statusList});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(
-          vertical: MediaQuery.of(context).size.width * 0.2),
+          vertical: MediaQuery.of(context).size.width * 0.01),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.transparent,
+          color: statusList["isTranscriptActive"] &&
+                  statusList["isShareScreenActive"]
+              ? AppColors.primaryVariant
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
         width: MediaQuery.of(context).size.width,
@@ -31,7 +34,8 @@ class UserListWidget extends StatelessWidget {
                 children: [
                   UserWidget(
                       name: "Arizli R",
-                      isMicActive: stateList['isMicActive'],
+                      isMicActive: statusList['isMicActive'],
+                      isVideoActive: statusList['isVideoActive'],
                       textSize: textSize,
                       imageSize: imageSize),
                   Padding(
@@ -48,10 +52,11 @@ class UserListWidget extends StatelessWidget {
                     ),
                   ),
                   UserWidget(
-                      name: "Senshi",
-                      isMicActive: false,
+                      name: "Arizli R",
+                      isMicActive: statusList['isMicActive'],
+                      isVideoActive: statusList['isVideoActive'],
                       textSize: textSize,
-                      imageSize: imageSize)
+                      imageSize: imageSize),
                 ],
               ),
             );
@@ -67,6 +72,7 @@ class UserWidget extends StatelessWidget {
     super.key,
     required this.name,
     required this.isMicActive,
+    required this.isVideoActive,
     required this.textSize,
     required this.imageSize,
   });
@@ -75,6 +81,7 @@ class UserWidget extends StatelessWidget {
   final double imageSize;
   final String name;
   final bool isMicActive;
+  final bool isVideoActive;
 
   @override
   Widget build(BuildContext context) {
@@ -100,10 +107,15 @@ class UserWidget extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Image.network(
-                  'https://www.siegemedia.com/wp-content/uploads/2020/12/business-blogs-that-work-03-barkbox.webp',
-                  fit: BoxFit.cover,
-                ),
+                isVideoActive
+                    ? Image.network(
+                        'https://www.siegemedia.com/wp-content/uploads/2020/12/business-blogs-that-work-03-barkbox.webp',
+                        fit: BoxFit.cover,
+                      )
+                    : Image.asset(
+                        'assets/images/blank-profile.png',
+                        fit: BoxFit.cover,
+                      ),
                 !isMicActive
                     ? Container(
                         color: Colors.black.withOpacity(

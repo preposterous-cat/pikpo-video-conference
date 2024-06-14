@@ -30,9 +30,80 @@ class TranscriptWidget extends StatelessWidget {
                   size: 20,
                 )
               ],
-            )
+            ),
+            SizedBox(
+              height: 10,
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    UserTranscriptWidget(),
+                    UserTranscriptWidget(),
+                    UserTranscriptWidget(),
+                    UserTranscriptWidget(),
+                    SizedBox(height: 15),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class UserTranscriptWidget extends StatelessWidget {
+  const UserTranscriptWidget({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 9),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 30,
+            height: 50,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Image.asset(
+                'assets/images/blank-profile.png',
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          const SizedBox(
+            width: 10,
+          ),
+          const Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Username",
+                    style: TextStyle(
+                        color: AppColors.highlightColor,
+                        fontWeight: FontWeight.w600),
+                  ),
+                  Text(
+                    "Paragraph 1: Lorem ipsum dolor sit amet, consectetur adipiscing elit.Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+                    style: TextStyle(
+                        color: AppColors.textColor,
+                        fontWeight: FontWeight.w300,
+                        overflow: TextOverflow.clip),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
