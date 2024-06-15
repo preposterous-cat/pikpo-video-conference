@@ -18,10 +18,13 @@ class MyApp extends StatelessWidget {
         '/': (context) => const LoginScreen(),
       },
       onGenerateRoute: (settings) {
+        final args = settings.arguments as Map<String, dynamic>;
         if (settings.name == '/call') {
-          final username = settings.arguments as String;
           return MaterialPageRoute(
-            builder: (context) => CallScreen(username: username),
+            builder: (context) => CallScreen(
+              username: args['username'],
+              type: args['type'],
+            ),
           );
         }
         assert(false, 'Need to implement ${settings.name}');

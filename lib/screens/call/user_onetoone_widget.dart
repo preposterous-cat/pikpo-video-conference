@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pikpo_video_conference/theme/app_colors.dart';
 
-class UserListWidget extends StatelessWidget {
+class UserOnetoOneWidget extends StatelessWidget {
   final Map<String, dynamic> statusList;
-  const UserListWidget({super.key, required this.statusList});
+  const UserOnetoOneWidget({super.key, required this.statusList});
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +36,7 @@ class UserListWidget extends StatelessWidget {
                       name: "Arizli R",
                       isMicActive: statusList['isMicActive'],
                       isVideoActive: statusList['isVideoActive'],
+                      isPendingConnection: false,
                       textSize: textSize,
                       imageSize: imageSize),
                   Padding(
@@ -55,6 +56,7 @@ class UserListWidget extends StatelessWidget {
                       name: "Arizli R",
                       isMicActive: statusList['isMicActive'],
                       isVideoActive: statusList['isVideoActive'],
+                      isPendingConnection: statusList['isPendingConnection'],
                       textSize: textSize,
                       imageSize: imageSize),
                 ],
@@ -73,6 +75,7 @@ class UserWidget extends StatelessWidget {
     required this.name,
     required this.isMicActive,
     required this.isVideoActive,
+    required this.isPendingConnection,
     required this.textSize,
     required this.imageSize,
   });
@@ -82,6 +85,7 @@ class UserWidget extends StatelessWidget {
   final String name;
   final bool isMicActive;
   final bool isVideoActive;
+  final bool isPendingConnection;
 
   @override
   Widget build(BuildContext context) {
@@ -116,19 +120,30 @@ class UserWidget extends StatelessWidget {
                         'assets/images/blank-profile.png',
                         fit: BoxFit.cover,
                       ),
-                !isMicActive
-                    ? Container(
-                        color: Colors.black.withOpacity(
-                            0.5), // Mengatur warna dan tingkat opacity
-                        width: double
-                            .infinity, // Sesuaikan ukuran sesuai kebutuhan
-                        height: double.infinity,
-                        child: const Icon(
-                          Icons.mic_off_outlined,
-                          color: AppColors.textColor,
-                        ), // Sesuaikan ukuran sesuai kebutuhan
-                      )
-                    : Container(),
+                if (!isMicActive)
+                  Container(
+                    color: Colors.black
+                        .withOpacity(0.5), // Mengatur warna dan tingkat opacity
+                    width: double.infinity, // Sesuaikan ukuran sesuai kebutuhan
+                    height: double.infinity,
+                    child: const Icon(
+                      Icons.mic_off_outlined,
+                      color: AppColors.textColor,
+                    ), // Sesuaikan ukuran sesuai kebutuhan
+                  ),
+                if (isPendingConnection)
+                  Container(
+                    color: Colors.white
+                        .withOpacity(0.5), // Mengatur warna dan tingkat opacity
+                    width: double.infinity, // Sesuaikan ukuran sesuai kebutuhan
+                    height: double.infinity,
+                    alignment: Alignment.center,
+                    child: const Text(
+                      "Waiting...",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: AppColors.backgroundColor),
+                    ), // Sesuaikan ukuran sesuai kebutuhan
+                  ),
               ],
             ),
           ),

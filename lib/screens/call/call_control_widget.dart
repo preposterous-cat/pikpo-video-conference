@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:pikpo_video_conference/screens/call/call_widget.dart';
 import 'package:pikpo_video_conference/theme/app_colors.dart';
+
+enum ControlButtonType { mic, video, transcript, chat, sharescreen }
 
 class CallControlWidget extends StatelessWidget {
   final Map<String, dynamic> handlerList;
@@ -73,5 +74,104 @@ class CallControlWidget extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class ControlButton extends StatelessWidget {
+  final Widget icon;
+  final VoidCallback onPressed;
+  final ControlButtonType type;
+  final bool isActive;
+
+  const ControlButton(
+      {super.key,
+      required this.icon,
+      required this.onPressed,
+      required this.type,
+      required this.isActive});
+
+  @override
+  Widget build(BuildContext context) {
+    Color backgroundColor = AppColors.primaryVariant;
+    if (type == ControlButtonType.transcript && isActive) {
+      backgroundColor = const Color(0xFFA9C9D5);
+    }
+    return Stack(
+      children: [
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.all(0),
+            minimumSize: const Size(50, 50),
+            shape: const CircleBorder(),
+            backgroundColor: backgroundColor,
+          ),
+          onPressed: onPressed,
+          child: icon,
+        ),
+        if (type == ControlButtonType.mic && !isActive)
+          IgnorePointer(
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.black.withOpacity(0.5),
+              ),
+              child: CustomPaint(
+                painter: DiagonalLinePainter(),
+              ),
+            ),
+          ),
+        if (type == ControlButtonType.video && !isActive)
+          IgnorePointer(
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.black.withOpacity(0.5),
+              ),
+              child: CustomPaint(
+                painter: DiagonalLinePainter(),
+              ),
+            ),
+          ),
+        if (type == ControlButtonType.sharescreen && isActive)
+          IgnorePointer(
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.black.withOpacity(0.5),
+              ),
+              child: CustomPaint(
+                painter: DiagonalLinePainter(),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class DiagonalLinePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.red
+      ..strokeWidth = 2;
+
+    // Draw a diagonal line
+    canvas.drawLine(
+      const Offset(10, 5),
+      Offset(size.width / 1.3, size.height / 1.1),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return false;
   }
 }

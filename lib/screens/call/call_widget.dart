@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pikpo_video_conference/screens/call/share_screen_widget.dart';
 import 'package:pikpo_video_conference/screens/call/transcript_widget.dart';
+import 'package:pikpo_video_conference/screens/call/user_group_widget.dart';
 import 'package:pikpo_video_conference/theme/app_colors.dart';
 import 'package:pikpo_video_conference/widgets/custom_dialog_alert.dart';
 
 import 'call_control_widget.dart';
 import 'navbar_widget.dart';
-import 'user_list_widget.dart';
+import 'user_onetoone_widget.dart';
+
+enum CallType { oneToOne, group }
 
 class CallWidget extends StatefulWidget {
   final String username;
-  const CallWidget({super.key, required this.username});
+  final CallType type;
+  const CallWidget({super.key, required this.username, required this.type});
 
   @override
   State<CallWidget> createState() => _CallWidgetState();
@@ -24,6 +27,7 @@ class _CallWidgetState extends State<CallWidget> {
   bool isChatVisible = false;
   bool isShareScreenActive = false;
   bool isSendMessageActive = false;
+  bool isPendingConnection = false;
 
   @override
   void initState() {
@@ -39,8 +43,7 @@ class _CallWidgetState extends State<CallWidget> {
           content: "Are you sure you want to leave the room?",
           onConfirm: () {
             // Handle confirm action
-            Navigator.of(context).pop();
-            Navigator.of(context).pop();
+            Navigator.popUntil(context, ModalRoute.withName('/'));
           },
           onCancel: () {
             // Handle cancel action
@@ -104,12 +107,21 @@ class _CallWidgetState extends State<CallWidget> {
                 flex: !isShareScreenActive && !isTranscriptActive
                     ? 2
                     : 4, //Adjust flex to fit screen based on Share Screen and Transcript
-                child: UserListWidget(statusList: {
-                  "isMicActive": isMicActive,
-                  "isVideoActive": isVideoActive,
-                  "isTranscriptActive": isTranscriptActive,
-                  "isShareScreenActive": isShareScreenActive
-                }),
+                child: widget.type == CallType.oneToOne
+                    ? UserOnetoOneWidget(statusList: {
+                        "isMicActive": isMicActive,
+                        "isVideoActive": isVideoActive,
+                        "isTranscriptActive": isTranscriptActive,
+                        "isShareScreenActive": isShareScreenActive,
+                        "isPendingConnection": isPendingConnection,
+                      })
+                    : UserGroupWidget(statusList: {
+                        "isMicActive": isMicActive,
+                        "isVideoActive": isVideoActive,
+                        "isTranscriptActive": isTranscriptActive,
+                        "isShareScreenActive": isShareScreenActive,
+                        "isPendingConnection": isPendingConnection,
+                      }),
               ),
               if (isTranscriptActive)
                 const Flexible(
@@ -192,7 +204,7 @@ class _CallWidgetState extends State<CallWidget> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   IconButton(
-                    icon: Icon(Icons.open_in_full_rounded),
+                    icon: const Icon(Icons.open_in_full_rounded),
                     onPressed: () {
                       setState(() {
                         isChatVisible = !isChatVisible;
@@ -310,9 +322,9 @@ class _CallWidgetState extends State<CallWidget> {
                   ),
                 ),
               ),
-              Expanded(
+              const Expanded(
                 child: SingleChildScrollView(
-                  child: const Column(
+                  child: Column(
                     children: [
                       UserChat(),
                       UserChat(),
@@ -396,106 +408,5 @@ class UserChat extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-enum ControlButtonType { mic, video, transcript, chat, sharescreen }
-
-class ControlButton extends StatelessWidget {
-  final Widget icon;
-  final VoidCallback onPressed;
-  final ControlButtonType type;
-  final bool isActive;
-
-  const ControlButton(
-      {super.key,
-      required this.icon,
-      required this.onPressed,
-      required this.type,
-      required this.isActive});
-
-  @override
-  Widget build(BuildContext context) {
-    Color backgroundColor = AppColors.primaryVariant;
-    if (type == ControlButtonType.transcript && isActive) {
-      backgroundColor = const Color(0xFFA9C9D5);
-    }
-    return Stack(
-      children: [
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.all(0),
-            minimumSize: const Size(50, 50),
-            shape: const CircleBorder(),
-            backgroundColor: backgroundColor,
-          ),
-          onPressed: onPressed,
-          child: icon,
-        ),
-        if (type == ControlButtonType.mic && !isActive)
-          IgnorePointer(
-            child: Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.black.withOpacity(0.5),
-              ),
-              child: CustomPaint(
-                painter: DiagonalLinePainter(),
-              ),
-            ),
-          ),
-        if (type == ControlButtonType.video && !isActive)
-          IgnorePointer(
-            child: Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.black.withOpacity(0.5),
-              ),
-              child: CustomPaint(
-                painter: DiagonalLinePainter(),
-              ),
-            ),
-          ),
-        if (type == ControlButtonType.sharescreen && isActive)
-          IgnorePointer(
-            child: Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.black.withOpacity(0.5),
-              ),
-              child: CustomPaint(
-                painter: DiagonalLinePainter(),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class DiagonalLinePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.red
-      ..strokeWidth = 2;
-
-    // Draw a diagonal line
-    canvas.drawLine(
-      const Offset(10, 5),
-      Offset(size.width / 1.3, size.height / 1.1),
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) {
-    return false;
   }
 }
