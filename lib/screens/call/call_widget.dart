@@ -5,6 +5,8 @@ import 'package:pikpo_video_conference/screens/call/transcript_widget.dart';
 import 'package:pikpo_video_conference/theme/app_colors.dart';
 import 'package:pikpo_video_conference/widgets/custom_dialog_alert.dart';
 
+import 'call_control_widget.dart';
+import 'navbar_widget.dart';
 import 'user_list_widget.dart';
 
 class CallWidget extends StatefulWidget {
@@ -19,8 +21,9 @@ class _CallWidgetState extends State<CallWidget> {
   bool isMicActive = true;
   bool isVideoActive = false;
   bool isTranscriptActive = false;
-  bool isChatActive = false;
+  bool isChatVisible = false;
   bool isShareScreenActive = false;
+  bool isSendMessageActive = false;
 
   @override
   void initState() {
@@ -68,7 +71,7 @@ class _CallWidgetState extends State<CallWidget> {
 
   void _onChatHandler() {
     setState(() {
-      isChatActive = !isChatActive;
+      isSendMessageActive = !isSendMessageActive;
     });
   }
 
@@ -80,50 +83,316 @@ class _CallWidgetState extends State<CallWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-      child: Flex(
-        direction: Axis.vertical,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Stack(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+          child: Flex(
+            direction: Axis.vertical,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              NavbarWidget(
+                widget: widget,
+                onDisconnectPressed: _onDisconnectRoom,
+              ),
+              if (isShareScreenActive)
+                const Flexible(
+                  flex: 6,
+                  child: ShareScreenWidget(),
+                ),
+              Flexible(
+                flex: !isShareScreenActive && !isTranscriptActive
+                    ? 2
+                    : 4, //Adjust flex to fit screen based on Share Screen and Transcript
+                child: UserListWidget(statusList: {
+                  "isMicActive": isMicActive,
+                  "isVideoActive": isVideoActive,
+                  "isTranscriptActive": isTranscriptActive,
+                  "isShareScreenActive": isShareScreenActive
+                }),
+              ),
+              if (isTranscriptActive)
+                const Flexible(
+                  flex: 5,
+                  child: TranscriptWidget(),
+                ),
+              CallControlWidget(handlerList: {
+                "onMicPressed": _onMicHandler,
+                "onVideoPressed": _onVideoHandler,
+                "onTranscriptPressed": _onTranscriptHandler,
+                "onChatPressed": _onChatHandler,
+                "onShareScreenPressed": _onShareScreenHandler,
+              }, statusList: {
+                "isMicActive": isMicActive,
+                "isVideoActive": isVideoActive,
+                "isTranscriptActive": isTranscriptActive,
+                "isSendMessageActive": isSendMessageActive,
+                "isShareScreenActive": isShareScreenActive
+              })
+            ],
+          ),
+        ),
+        _buildChatContainer(),
+        _buildSendMessageContainer(),
+      ],
+    );
+  }
+
+  Widget _buildSendMessageContainer() {
+    return AnimatedPositioned(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      bottom: isSendMessageActive ? 0 : -400,
+      left: 0,
+      right: 0,
+      child: GestureDetector(
+        onVerticalDragUpdate: (details) {
+          if (details.primaryDelta! < -7) {
+            setState(() {
+              isSendMessageActive = true;
+            });
+          } else if (details.primaryDelta! > 7) {
+            setState(() {
+              isSendMessageActive = false;
+            });
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 22),
+          decoration: const BoxDecoration(
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey,
+                offset: Offset(
+                  5.0,
+                  5.0,
+                ),
+                blurRadius: 10.0,
+                spreadRadius: 2.0,
+              ),
+            ],
+            borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(40), topRight: Radius.circular(40)),
+            color: AppColors.textColor,
+          ),
+          child: Column(
+            children: [
+              if (!isChatVisible)
+                SizedBox(
+                  height: 20,
+                  child: Center(
+                    child: Container(
+                      width: 50,
+                      height: 5,
+                      color: const Color(0xFFDADADA),
+                    ),
+                  ),
+                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.open_in_full_rounded),
+                    onPressed: () {
+                      setState(() {
+                        isChatVisible = !isChatVisible;
+                      });
+                    },
+                  )
+                ],
+              ),
+              Column(
+                children: [
+                  Container(
+                    child: const TextField(
+                      decoration: InputDecoration(
+                          hintText: "Write a message",
+                          hintStyle: TextStyle(color: Color(0xFFDBDBDB)),
+                          border: InputBorder.none),
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(
+                              Icons.photo_camera_outlined,
+                              color: Colors.black,
+                            ),
+                            onPressed: () {
+                              // Handle send message
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.photo_library_outlined,
+                              color: Colors.black,
+                            ),
+                            onPressed: () {
+                              // Handle send message
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.compare_arrows_rounded,
+                              color: Colors.black,
+                            ),
+                            onPressed: () {
+                              // Handle send message
+                            },
+                          ),
+                        ],
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            shape: const CircleBorder(),
+                            padding: const EdgeInsets.all(5),
+                            backgroundColor: const Color(0xFFDADADA)),
+                        child: const Icon(
+                          Icons.send_outlined,
+                          color: Colors.black,
+                        ),
+                        onPressed: () {
+                          // Handle send message
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChatContainer() {
+    return AnimatedPositioned(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      bottom: isSendMessageActive && isChatVisible ? 0 : -900,
+      left: 0,
+      right: 0,
+      child: GestureDetector(
+        onVerticalDragUpdate: (details) {
+          if (details.primaryDelta! < -7) {
+            setState(() {
+              isSendMessageActive = true;
+              isChatVisible = true;
+            });
+          } else if (details.primaryDelta! > 7) {
+            setState(() {
+              isSendMessageActive = false;
+              isChatVisible = false;
+            });
+          }
+        },
+        child: Container(
+          height: 500,
+          padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 0),
+          decoration: const BoxDecoration(
+            borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(40), topRight: Radius.circular(40)),
+            color: AppColors.textColor,
+          ),
+          child: Column(
+            children: [
+              SizedBox(
+                height: 50,
+                child: Center(
+                  child: Container(
+                    width: 50,
+                    height: 5,
+                    color: const Color(0xFFDADADA),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: const Column(
+                    children: [
+                      UserChat(),
+                      UserChat(),
+                      UserChat(),
+                      UserChat(),
+                      SizedBox(height: 150),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class UserChat extends StatelessWidget {
+  const UserChat({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 22),
+      decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: AppColors.backgroundColor))),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          NavbarWidget(
-            widget: widget,
-            onDisconnectPressed: _onDisconnectRoom,
-          ),
-          if (isShareScreenActive)
-            const Flexible(
-              flex: 6,
-              child: ShareScreenWidget(),
+          SizedBox(
+            height: 30,
+            width: 30,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Image.asset(
+                'assets/images/blank-profile.png',
+                fit: BoxFit.cover,
+              ),
             ),
-          Flexible(
-            flex: !isShareScreenActive && !isTranscriptActive
-                ? 2
-                : 4, //Adjust flex to fit screen based on Share Screen and Transcript
-            child: UserListWidget(statusList: {
-              "isMicActive": isMicActive,
-              "isVideoActive": isVideoActive,
-              "isTranscriptActive": isTranscriptActive,
-              "isShareScreenActive": isShareScreenActive
-            }),
           ),
-          if (isTranscriptActive)
-            const Flexible(
-              flex: 5,
-              child: TranscriptWidget(),
+          const SizedBox(
+            width: 10,
+          ),
+          const Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "User",
+                        style: TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 22),
+                      ),
+                      SizedBox(
+                        width: 50,
+                      ),
+                      Text(
+                        ".10:15PM",
+                        style: TextStyle(
+                            fontWeight: FontWeight.w400, fontSize: 18),
+                      )
+                    ],
+                  ),
+                  Text(
+                    "Lorem Ipsum sit dolot amettt Lorem Ipsum sit dolot amettt Lorem Ipsum sit dolot amettt Lorem Ipsum sit dolot amettt",
+                    style: TextStyle(
+                        color: AppColors.backgroundColor,
+                        fontSize: 16,
+                        overflow: TextOverflow.clip),
+                  )
+                ],
+              ),
             ),
-          CallControlWidget(handlerList: {
-            "onMicPressed": _onMicHandler,
-            "onVideoPressed": _onVideoHandler,
-            "onTranscriptPressed": _onTranscriptHandler,
-            "onChatPressed": _onChatHandler,
-            "onShareScreenPressed": _onShareScreenHandler,
-          }, statusList: {
-            "isMicActive": isMicActive,
-            "isVideoActive": isVideoActive,
-            "isTranscriptActive": isTranscriptActive,
-            "isChatActive": isChatActive,
-            "isShareScreenActive": isShareScreenActive
-          })
+          ),
         ],
       ),
     );
@@ -131,79 +400,6 @@ class _CallWidgetState extends State<CallWidget> {
 }
 
 enum ControlButtonType { mic, video, transcript, chat, sharescreen }
-
-class CallControlWidget extends StatelessWidget {
-  final Map<String, dynamic> handlerList;
-  final Map<String, dynamic> statusList;
-
-  const CallControlWidget(
-      {super.key, required this.handlerList, required this.statusList});
-
-  @override
-  Widget build(BuildContext context) {
-    return Flexible(
-      flex: 2,
-      child: Wrap(
-        spacing: 20,
-        runSpacing: 8,
-        children: [
-          ControlButton(
-            icon: const Icon(
-              Icons.mic_none_rounded,
-              color: AppColors.textColor,
-            ),
-            onPressed: handlerList["onMicPressed"],
-            type: ControlButtonType.mic,
-            isActive: statusList["isMicActive"],
-          ),
-          ControlButton(
-            icon: const Icon(
-              Icons.videocam_outlined,
-              color: AppColors.textColor,
-            ),
-            onPressed: handlerList["onVideoPressed"],
-            type: ControlButtonType.video,
-            isActive: statusList["isVideoActive"],
-          ),
-          ControlButton(
-            icon: Text(
-              "T",
-              style: TextStyle(
-                  color: statusList["isTranscriptActive"]
-                      ? AppColors.backgroundColor
-                      : AppColors.textColor,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 20),
-            ),
-            onPressed: handlerList["onTranscriptPressed"],
-            type: ControlButtonType.transcript,
-            isActive: statusList["isTranscriptActive"],
-          ),
-          ControlButton(
-            icon: SvgPicture.asset(
-              'assets/images/sketch.svg', // Path to your SVG
-              width: 18,
-              height: 18.19,
-              color: AppColors.textColor,
-            ),
-            onPressed: handlerList["onChatPressed"],
-            type: ControlButtonType.chat,
-            isActive: statusList["isChatActive"],
-          ),
-          ControlButton(
-            icon: const Icon(
-              Icons.present_to_all_rounded,
-              color: AppColors.textColor,
-            ),
-            onPressed: handlerList["onShareScreenPressed"],
-            type: ControlButtonType.sharescreen,
-            isActive: statusList["isShareScreenActive"],
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class ControlButton extends StatelessWidget {
   final Widget icon;
@@ -301,62 +497,5 @@ class DiagonalLinePainter extends CustomPainter {
   @override
   bool shouldRepaint(CustomPainter oldDelegate) {
     return false;
-  }
-}
-
-class NavbarWidget extends StatelessWidget {
-  const NavbarWidget(
-      {super.key, required this.widget, required this.onDisconnectPressed});
-
-  final CallWidget widget;
-  final VoidCallback onDisconnectPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            ClipOval(
-              child: Image.asset(
-                'assets/images/blank-profile.png',
-                width: 30,
-                height: 30,
-                fit: BoxFit.cover,
-              ),
-            ),
-            const SizedBox(
-              width: 6,
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.username,
-                  style: const TextStyle(color: AppColors.textColor),
-                ),
-                const Text(
-                  '@your-website.com',
-                  style: TextStyle(color: AppColors.textVariant),
-                ),
-              ],
-            )
-          ],
-        ),
-        ElevatedButton(
-          onPressed: onDisconnectPressed,
-          style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-              fixedSize: const Size(24, 24),
-              backgroundColor: Colors.transparent),
-          child: const Icon(
-            Icons.output,
-            color: AppColors.textColor,
-          ),
-        ),
-      ],
-    );
   }
 }
