@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "712605391861",
+    "project_id": "pikpo-video-conference",
+    "storage_bucket": "pikpo-video-conference.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:712605391861:android:2ecc4d73ca2e7dad22debc",
+        "android_client_info": {
+          "package_name": "com.example.pikpo_video_conference"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKP0CDQxHdpUSZOEMVsOkCwwa1hMlbrK0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

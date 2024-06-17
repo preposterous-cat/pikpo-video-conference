@@ -22,9 +22,9 @@ class MyApp extends StatelessWidget {
         if (settings.name == '/call') {
           return MaterialPageRoute(
             builder: (context) => CallScreen(
-              username: args['username'],
-              type: args['type'],
-            ),
+                username: args['username'],
+                type: args['type'],
+                livekitService: args['livekitService']),
           );
         }
         assert(false, 'Need to implement ${settings.name}');

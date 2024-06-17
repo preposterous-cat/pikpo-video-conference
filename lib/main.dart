@@ -3,6 +3,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pikpo_video_conference/app.dart';
 
 Future<void> main() async {
-  await dotenv.load();
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }

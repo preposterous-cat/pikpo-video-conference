@@ -1,9 +1,15 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:livekit_client/livekit_client.dart';
 import 'package:pikpo_video_conference/screens/call/share_screen_widget.dart';
 import 'package:pikpo_video_conference/screens/call/transcript_widget.dart';
 import 'package:pikpo_video_conference/screens/call/user_group_widget.dart';
+import 'package:pikpo_video_conference/services/livekit_service.dart';
 import 'package:pikpo_video_conference/theme/app_colors.dart';
 import 'package:pikpo_video_conference/widgets/custom_dialog_alert.dart';
+import 'package:http/http.dart' as http;
 
 import 'call_control_widget.dart';
 import 'navbar_widget.dart';
@@ -14,26 +20,61 @@ enum CallType { oneToOne, group }
 class CallWidget extends StatefulWidget {
   final String username;
   final CallType type;
-  const CallWidget({super.key, required this.username, required this.type});
+  final LiveKitService livekitService;
+
+  const CallWidget(
+      {super.key,
+      required this.username,
+      required this.type,
+      required this.livekitService});
 
   @override
-  State<CallWidget> createState() => _CallWidgetState();
+  State<CallWidget> createState() => CallWidgetState();
 }
 
-class _CallWidgetState extends State<CallWidget> {
-  bool isMicActive = true;
-  bool isVideoActive = false;
+class CallWidgetState extends State<CallWidget> {
+  // Additional state for each participant
+  final Map<String, bool?> micStatus = {};
+  final Map<String, bool?> videoStatus = {};
   bool isTranscriptActive = false;
   bool isChatVisible = false;
   bool isShareScreenActive = false;
   bool isSendMessageActive = false;
   bool isPendingConnection = false;
+  List participants = [];
 
   @override
   void initState() {
     super.initState();
+    // Initialize any necessary data or state here
+
+    _getListParticipants();
   }
 
+  Future<void> _getListParticipants() async {
+    // Get token
+    final serverUrl = dotenv.env['SERVER_URL'];
+    final response = await http
+        .get(Uri.parse("$serverUrl/api/participant/getListParticipants"));
+
+    if (response.statusCode == 200) {
+      setState(() {
+        participants = jsonDecode(response.body);
+        // Initialize mic and video status for each participant
+        for (var participant in participants) {
+          micStatus[participant['identity']] = widget
+              .livekitService.room.localParticipant?.trackPublications.values
+              .firstWhere(
+                  (p) => p.participant.identity == participant['identity'])
+              .participant
+              .isMicrophoneEnabled();
+          videoStatus[participant['identity']] = false;
+        }
+      });
+    }
+  }
+
+  /// Displays a dialog to confirm room disconnection
   void _onDisconnectRoom() {
     showDialog(
       context: context,
@@ -54,34 +95,71 @@ class _CallWidgetState extends State<CallWidget> {
     );
   }
 
-  void _onMicHandler() {
+  /// Toggles microphone state
+  void _onMicHandler(String identity) {
     setState(() {
-      isMicActive = !isMicActive;
+      micStatus[identity] = !micStatus[identity]!;
+    });
+    // Find the corresponding participant and set microphone enabled/disabled
+    final participant = widget
+        .livekitService.room.localParticipant?.trackPublications.values
+        .firstWhere((p) => p.participant.identity == identity);
+    participant?.participant.setMicrophoneEnabled(micStatus[identity]!);
+  }
+
+  void _onVideoHandler(String identity) {
+    setState(() {
+      videoStatus[identity] = !videoStatus[identity]!;
     });
   }
 
-  void _onVideoHandler() {
-    setState(() {
-      isVideoActive = !isVideoActive;
-    });
-  }
-
+  /// Toggles transcript state
   void _onTranscriptHandler() {
     setState(() {
       isTranscriptActive = !isTranscriptActive;
     });
   }
 
+  /// Toggles chat state
   void _onChatHandler() {
     setState(() {
       isSendMessageActive = !isSendMessageActive;
     });
   }
 
+  /// Toggles share screen state
   void _onShareScreenHandler() {
     setState(() {
       isShareScreenActive = !isShareScreenActive;
     });
+  }
+
+  /// get all status state
+  Map<String, bool?> getStatusList() {
+    return {
+      "isMicActive": micStatus[widget.username],
+      "isVideoActive": videoStatus[widget.username],
+      "isTranscriptActive": isTranscriptActive,
+      "isShareScreenActive": isShareScreenActive,
+      "isPendingConnection": isPendingConnection,
+      "isSendMessageActive": isSendMessageActive,
+      "isChatVisible": isChatVisible
+    };
+  }
+
+  /// get all status state
+  Map<String, VoidCallback> getHandlerList() {
+    return {
+      "onMicPressed": () {
+        _onMicHandler(widget.username);
+      },
+      "onVideoPressed": () {
+        _onVideoHandler(widget.username);
+      },
+      "onTranscriptPressed": _onTranscriptHandler,
+      "onChatPressed": _onChatHandler,
+      "onShareScreenPressed": _onShareScreenHandler,
+    };
   }
 
   @override
@@ -108,39 +186,19 @@ class _CallWidgetState extends State<CallWidget> {
                     ? 2
                     : 4, //Adjust flex to fit screen based on Share Screen and Transcript
                 child: widget.type == CallType.oneToOne
-                    ? UserOnetoOneWidget(statusList: {
-                        "isMicActive": isMicActive,
-                        "isVideoActive": isVideoActive,
-                        "isTranscriptActive": isTranscriptActive,
-                        "isShareScreenActive": isShareScreenActive,
-                        "isPendingConnection": isPendingConnection,
-                      })
-                    : UserGroupWidget(statusList: {
-                        "isMicActive": isMicActive,
-                        "isVideoActive": isVideoActive,
-                        "isTranscriptActive": isTranscriptActive,
-                        "isShareScreenActive": isShareScreenActive,
-                        "isPendingConnection": isPendingConnection,
-                      }),
+                    ? UserOnetoOneWidget(
+                        participants: participants,
+                        livekitService: widget.livekitService,
+                      )
+                    : UserGroupWidget(statusList: getStatusList()),
               ),
               if (isTranscriptActive)
                 const Flexible(
                   flex: 5,
                   child: TranscriptWidget(),
                 ),
-              CallControlWidget(handlerList: {
-                "onMicPressed": _onMicHandler,
-                "onVideoPressed": _onVideoHandler,
-                "onTranscriptPressed": _onTranscriptHandler,
-                "onChatPressed": _onChatHandler,
-                "onShareScreenPressed": _onShareScreenHandler,
-              }, statusList: {
-                "isMicActive": isMicActive,
-                "isVideoActive": isVideoActive,
-                "isTranscriptActive": isTranscriptActive,
-                "isSendMessageActive": isSendMessageActive,
-                "isShareScreenActive": isShareScreenActive
-              })
+              CallControlWidget(
+                  handlerList: getHandlerList(), statusList: getStatusList())
             ],
           ),
         ),

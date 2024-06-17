@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pikpo_video_conference/screens/call/call_widget.dart';
 import 'package:pikpo_video_conference/screens/login/login_controller.dart';
+import 'package:pikpo_video_conference/services/livekit_service.dart';
 import 'package:pikpo_video_conference/theme/app_colors.dart';
+import 'package:http/http.dart' as http;
+import 'package:pikpo_video_conference/widgets/custom_dialog_alert.dart';
 
 /// Login screen widget
 class LoginWidget extends StatefulWidget {
@@ -12,6 +16,8 @@ class LoginWidget extends StatefulWidget {
 }
 
 class _LoginWidgetState extends State<LoginWidget> {
+  late LiveKitService _liveKitService;
+
   final LoginController _controller =
       LoginController(); // Controller for managing login state
 
@@ -32,13 +38,60 @@ class _LoginWidgetState extends State<LoginWidget> {
   }
 
   /// Navigate to the call screen with the provided call type and username
-  void _routeToCallScreen(CallType type) {
-    final usernameText = _controller.usernameController.text;
-    if (usernameText.isNotEmpty) {
-      Navigator.pushNamed(context, '/call', arguments: <String, dynamic>{
-        "username": _controller.usernameController.text,
-        "type": type
-      });
+  Future<void> _routeToCallScreen(CallType type) async {
+    Map<String, dynamic> isConnected =
+        await _onConnectRoom(); // connecting process to create room
+
+    if (isConnected['status']) {
+      final usernameText = _controller.usernameController.text;
+      if (usernameText.isNotEmpty) {
+        Navigator.pushNamed(context, '/call', arguments: <String, dynamic>{
+          "username": _controller.usernameController.text,
+          "type": type,
+          "livekitService": _liveKitService
+        });
+      }
+    } else {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return CustomDialogAlert(
+            title: "Error", // Title of the dialog
+            content: isConnected['message'], // Content of the dialog
+            onConfirm: () {
+              // Navigate to the root route if confirmed
+              Navigator.of(context).pop(false);
+            },
+            onCancel: () {
+              // Close the dialog without any action
+              Navigator.of(context).pop(false);
+            },
+          );
+        },
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>> _onConnectRoom() async {
+    try {
+      // Get token
+      final serverUrl = dotenv.env['SERVER_URL'];
+      final participantName = _controller.usernameController.text;
+      final response = await http.get(Uri.parse(
+          "$serverUrl/api/token/getToken?participantName=$participantName"));
+
+      if (response.statusCode == 200) {
+        final token = response.body;
+        String? livekitUrl = dotenv.env['LIVEKIT_URL'];
+        _liveKitService = LiveKitService(url: livekitUrl!, token: token);
+        await _liveKitService.connectToRoom();
+        return {"status": true, "message": ""};
+      } else {
+        throw Exception('Failed to load token');
+      }
+    } catch (error) {
+      print('Error connecting to room: $error');
+      return {"status": false, "message": 'Error connecting to room: $error'};
     }
   }
 
