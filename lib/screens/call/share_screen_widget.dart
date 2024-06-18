@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:livekit_client/livekit_client.dart';
+import 'package:pikpo_video_conference/services/livekit_service.dart';
 import 'package:pikpo_video_conference/theme/app_colors.dart';
 
 class ShareScreenWidget extends StatelessWidget {
-  const ShareScreenWidget({
-    super.key,
-  });
+  final LiveKitService livekitService;
+  const ShareScreenWidget({super.key, required this.livekitService});
 
   @override
   Widget build(BuildContext context) {
+    final currentParticipant = livekitService
+        .room.localParticipant?.trackPublications.values
+        .where((p) => p.source == TrackSource.screenShareVideo);
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: SizedBox(
@@ -17,12 +22,11 @@ class ShareScreenWidget extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(20.0),
-              child: Image.network(
-                'https://www.siegemedia.com/wp-content/uploads/2020/12/business-blogs-that-work-03-barkbox.webp',
-                fit: BoxFit.cover,
-              ),
-            ),
+                borderRadius: BorderRadius.circular(20.0),
+                child: currentParticipant!.isNotEmpty
+                    ? VideoTrackRenderer(
+                        currentParticipant.firstOrNull?.track as VideoTrack)
+                    : null),
             Positioned(
               top: 10,
               right: 10,

@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:livekit_client/livekit_client.dart';
 import 'package:pikpo_video_conference/screens/call/share_screen_widget.dart';
 import 'package:pikpo_video_conference/screens/call/transcript_widget.dart';
 import 'package:pikpo_video_conference/screens/call/user_group_widget.dart';
@@ -78,7 +77,7 @@ class CallWidgetState extends State<CallWidget> {
           micStatus[identity] = currentParticipant!.firstOrNull?.participant
                   .isMicrophoneEnabled() ??
               false;
-          videoStatus[identity] = true;
+          videoStatus[identity] = false;
         }
       });
     }
@@ -90,6 +89,7 @@ class CallWidgetState extends State<CallWidget> {
       context: context,
       builder: (BuildContext context) {
         return CustomDialogAlert(
+          key: const Key("alertDialog"),
           title: "Warning",
           content: "Are you sure you want to leave the room?",
           onConfirm: () async {
@@ -145,13 +145,19 @@ class CallWidgetState extends State<CallWidget> {
     setState(() {
       isShareScreenActive = !isShareScreenActive;
     });
+    final currentParticipant = widget
+        .livekitService.room.localParticipant?.trackPublications.values
+        .where((p) => p.participant.identity == widget.username);
+
+    currentParticipant!.firstOrNull?.participant
+        .setScreenShareEnabled(isShareScreenActive);
   }
 
   /// get all status state
   Map<String, bool?> getStatusList() {
     return {
       "isMicActive": micStatus[widget.username] ?? true,
-      "isVideoActive": videoStatus[widget.username] ?? true,
+      "isVideoActive": videoStatus[widget.username] ?? false,
       "isTranscriptActive": isTranscriptActive,
       "isShareScreenActive": isShareScreenActive,
       "isPendingConnection": isPendingConnection,
@@ -190,24 +196,30 @@ class CallWidgetState extends State<CallWidget> {
                 onDisconnectPressed: _onDisconnectRoom,
               ),
               if (isShareScreenActive)
-                const Flexible(
+                Flexible(
                   flex: 6,
-                  child: ShareScreenWidget(),
+                  child: ShareScreenWidget(
+                      key: const Key("shareScreenWidger"),
+                      livekitService: widget.livekitService),
                 ),
               if (participants.isNotEmpty)
-                Flexible(
-                  flex: !isShareScreenActive && !isTranscriptActive
-                      ? 2
-                      : 4, // Adjust flex to fit screen based on Share Screen and Transcript
-                  child: widget.type == CallType.oneToOne
-                      ? UserOnetoOneWidget(
-                          participants: participants,
-                          livekitService: widget.livekitService,
-                          micStatus: micStatus,
-                          videoStatus: videoStatus,
-                          getData: _getListParticipants())
-                      : UserGroupWidget(statusList: getStatusList()),
-                ),
+                FutureBuilder<void>(
+                    future: _getListParticipants(),
+                    builder: (context, snapshot) {
+                      return Flexible(
+                        flex: !isShareScreenActive && !isTranscriptActive
+                            ? 2
+                            : 4, // Adjust flex to fit screen based on Share Screen and Transcript
+                        child: widget.type == CallType.oneToOne
+                            ? UserOnetoOneWidget(
+                                participants: participants,
+                                livekitService: widget.livekitService,
+                                micStatus: micStatus,
+                                videoStatus: videoStatus,
+                              )
+                            : UserGroupWidget(statusList: getStatusList()),
+                      );
+                    }),
               if (isTranscriptActive)
                 const Flexible(
                   flex: 5,
@@ -289,13 +301,11 @@ class CallWidgetState extends State<CallWidget> {
               ),
               Column(
                 children: [
-                  Container(
-                    child: const TextField(
-                      decoration: InputDecoration(
-                          hintText: "Write a message",
-                          hintStyle: TextStyle(color: Color(0xFFDBDBDB)),
-                          border: InputBorder.none),
-                    ),
+                  const TextField(
+                    decoration: InputDecoration(
+                        hintText: "Write a message",
+                        hintStyle: TextStyle(color: Color(0xFFDBDBDB)),
+                        border: InputBorder.none),
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,

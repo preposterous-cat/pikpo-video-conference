@@ -9,55 +9,46 @@ class UserOnetoOneWidget extends StatelessWidget {
   final LiveKitService livekitService;
   final Map<String, bool?> micStatus;
   final Map<String, bool?> videoStatus;
-  final Future<void> getData;
 
   const UserOnetoOneWidget(
       {super.key,
       required this.participants,
       required this.livekitService,
       required this.micStatus,
-      required this.videoStatus,
-      required this.getData});
+      required this.videoStatus});
 
   @override
   Widget build(BuildContext context) {
-    print('length in one:${participants}');
-    return FutureBuilder(
-        future: getData,
-        builder: (context, snapshot) {
-          return Padding(
-            padding: EdgeInsets.symmetric(
-                vertical: MediaQuery.of(context).size.width * 0.01),
-            child: Container(
-              decoration: BoxDecoration(
-                color: participants.any((p) => p["state"] == "PENDING")
-                    ? AppColors.primaryVariant
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              width: MediaQuery.of(context).size.width,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  // Calculate size based on available space
-                  double textSize =
-                      constraints.maxHeight * 0.1; // 10% of height
-                  double imageSize =
-                      constraints.maxHeight * 0.40; // 40% of height
+    return Padding(
+      padding: EdgeInsets.symmetric(
+          vertical: MediaQuery.of(context).size.width * 0.01),
+      child: Container(
+        decoration: BoxDecoration(
+          color: participants.any((p) => p["state"] == "PENDING")
+              ? AppColors.primaryVariant
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        width: MediaQuery.of(context).size.width,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Calculate size based on available space
+            double textSize = constraints.maxHeight * 0.1; // 10% of height
+            double imageSize = constraints.maxHeight * 0.40; // 40% of height
 
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 5),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: _buildUserWidgets(textSize, imageSize,
-                          participants, livekitService, micStatus, videoStatus),
-                    ),
-                  );
-                },
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 5),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: _buildUserWidgets(textSize, imageSize, participants,
+                    livekitService, micStatus, videoStatus),
               ),
-            ),
-          );
-        });
+            );
+          },
+        ),
+      ),
+    );
   }
 }
 
@@ -68,7 +59,6 @@ List<Widget> _buildUserWidgets(
     LiveKitService livekitService,
     Map<String, bool?> micStatus,
     Map<String, bool?> videoStatus) {
-  print('length in user:${participants.length}');
   if (participants.length == 1) {
     return [
       UserWidget(
@@ -141,8 +131,6 @@ class UserWidget extends StatelessWidget {
         .room.localParticipant?.trackPublications.values
         .where((p) => p.participant.identity == participant['identity']);
 
-    print(currentParticipant);
-
     bool? isMicActive = micStatus[participant['identity']] ?? true;
     bool? isVideoActive = videoStatus[participant['identity']] ?? false;
 
@@ -171,14 +159,14 @@ class UserWidget extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                isVideoActive!
+                isVideoActive
                     ? VideoTrackRenderer(
                         currentParticipant?.firstOrNull?.track as VideoTrack)
                     : Image.asset(
                         'assets/images/blank-profile.png',
                         fit: BoxFit.cover,
                       ),
-                if (!isMicActive!)
+                if (!isMicActive)
                   Container(
                     color: Colors.black.withOpacity(0.5),
                     width: double.infinity,

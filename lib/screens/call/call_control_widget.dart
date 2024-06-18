@@ -20,6 +20,7 @@ class CallControlWidget extends StatelessWidget {
         runSpacing: 8,
         children: [
           ControlButton(
+            key: const Key("micButton"),
             icon: const Icon(
               Icons.mic_none_rounded,
               color: AppColors.textColor,
@@ -29,6 +30,7 @@ class CallControlWidget extends StatelessWidget {
             isActive: statusList["isMicActive"],
           ),
           ControlButton(
+            key: const Key("videoButton"),
             icon: const Icon(
               Icons.videocam_outlined,
               color: AppColors.textColor,
@@ -38,6 +40,7 @@ class CallControlWidget extends StatelessWidget {
             isActive: statusList["isVideoActive"],
           ),
           ControlButton(
+            key: const Key("transcriptButton"),
             icon: Text(
               "T",
               style: TextStyle(
@@ -52,6 +55,7 @@ class CallControlWidget extends StatelessWidget {
             isActive: statusList["isTranscriptActive"],
           ),
           ControlButton(
+            key: const Key("chatButton"),
             icon: SvgPicture.asset(
               'assets/images/sketch.svg', // Path to your SVG
               width: 18,
@@ -63,6 +67,7 @@ class CallControlWidget extends StatelessWidget {
             isActive: statusList["isSendMessageActive"],
           ),
           ControlButton(
+            key: const Key("shareScreenButton"),
             icon: const Icon(
               Icons.present_to_all_rounded,
               color: AppColors.textColor,

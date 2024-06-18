@@ -44,6 +44,7 @@ class NavbarWidget extends StatelessWidget {
           ],
         ),
         ElevatedButton(
+          key: const Key("disconnectButton"),
           onPressed: onDisconnectPressed,
           style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
