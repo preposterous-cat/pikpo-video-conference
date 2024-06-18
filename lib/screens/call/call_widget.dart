@@ -51,6 +51,11 @@ class CallWidgetState extends State<CallWidget> {
     _getListParticipants();
   }
 
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   Future<void> _getListParticipants() async {
     // Get token
     final serverUrl = dotenv.env['SERVER_URL'];
@@ -58,17 +63,22 @@ class CallWidgetState extends State<CallWidget> {
         .get(Uri.parse("$serverUrl/api/participant/getListParticipants"));
 
     if (response.statusCode == 200) {
+      final newParticipants = jsonDecode(response.body);
+
       setState(() {
-        participants = jsonDecode(response.body);
+        participants = newParticipants;
+
         // Initialize mic and video status for each participant
-        for (var participant in participants) {
-          micStatus[participant['identity']] = widget
+        for (var participant in newParticipants) {
+          final identity = participant['identity'];
+          final currentParticipant = widget
               .livekitService.room.localParticipant?.trackPublications.values
-              .firstWhere(
-                  (p) => p.participant.identity == participant['identity'])
-              .participant
-              .isMicrophoneEnabled();
-          videoStatus[participant['identity']] = false;
+              .where((p) => p.participant.identity == identity);
+
+          micStatus[identity] = currentParticipant!.firstOrNull?.participant
+                  .isMicrophoneEnabled() ??
+              false;
+          videoStatus[identity] = true;
         }
       });
     }
@@ -82,8 +92,9 @@ class CallWidgetState extends State<CallWidget> {
         return CustomDialogAlert(
           title: "Warning",
           content: "Are you sure you want to leave the room?",
-          onConfirm: () {
+          onConfirm: () async {
             // Handle confirm action
+            await widget.livekitService.disconnectRoom();
             Navigator.popUntil(context, ModalRoute.withName('/'));
           },
           onCancel: () {
@@ -101,10 +112,12 @@ class CallWidgetState extends State<CallWidget> {
       micStatus[identity] = !micStatus[identity]!;
     });
     // Find the corresponding participant and set microphone enabled/disabled
-    final participant = widget
+    final currentParticipant = widget
         .livekitService.room.localParticipant?.trackPublications.values
-        .firstWhere((p) => p.participant.identity == identity);
-    participant?.participant.setMicrophoneEnabled(micStatus[identity]!);
+        .where((p) => p.participant.identity == identity);
+
+    currentParticipant!.firstOrNull?.participant
+        .setMicrophoneEnabled(micStatus[identity]!);
   }
 
   void _onVideoHandler(String identity) {
@@ -137,8 +150,8 @@ class CallWidgetState extends State<CallWidget> {
   /// get all status state
   Map<String, bool?> getStatusList() {
     return {
-      "isMicActive": micStatus[widget.username],
-      "isVideoActive": videoStatus[widget.username],
+      "isMicActive": micStatus[widget.username] ?? true,
+      "isVideoActive": videoStatus[widget.username] ?? true,
       "isTranscriptActive": isTranscriptActive,
       "isShareScreenActive": isShareScreenActive,
       "isPendingConnection": isPendingConnection,
@@ -181,17 +194,20 @@ class CallWidgetState extends State<CallWidget> {
                   flex: 6,
                   child: ShareScreenWidget(),
                 ),
-              Flexible(
-                flex: !isShareScreenActive && !isTranscriptActive
-                    ? 2
-                    : 4, //Adjust flex to fit screen based on Share Screen and Transcript
-                child: widget.type == CallType.oneToOne
-                    ? UserOnetoOneWidget(
-                        participants: participants,
-                        livekitService: widget.livekitService,
-                      )
-                    : UserGroupWidget(statusList: getStatusList()),
-              ),
+              if (participants.isNotEmpty)
+                Flexible(
+                  flex: !isShareScreenActive && !isTranscriptActive
+                      ? 2
+                      : 4, // Adjust flex to fit screen based on Share Screen and Transcript
+                  child: widget.type == CallType.oneToOne
+                      ? UserOnetoOneWidget(
+                          participants: participants,
+                          livekitService: widget.livekitService,
+                          micStatus: micStatus,
+                          videoStatus: videoStatus,
+                          getData: _getListParticipants())
+                      : UserGroupWidget(statusList: getStatusList()),
+                ),
               if (isTranscriptActive)
                 const Flexible(
                   flex: 5,
