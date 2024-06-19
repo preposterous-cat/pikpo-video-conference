@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:pikpo_video_conference/theme/app_colors.dart';
 
 class TranscriptWidget extends StatelessWidget {
-  const TranscriptWidget({
-    super.key,
-  });
+  final VoidCallback onTranscriptExpandPressed;
+  const TranscriptWidget({super.key, required this.onTranscriptExpandPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -13,28 +12,29 @@ class TranscriptWidget extends StatelessWidget {
           color: AppColors.primaryVariant,
           borderRadius: BorderRadius.circular(20)),
       width: MediaQuery.of(context).size.width,
-      child: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         child: Column(
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
+                const Text(
                   "Transcript",
                   style: TextStyle(color: AppColors.textColor),
                 ),
-                Icon(
-                  Icons.open_in_full_rounded,
+                IconButton(
+                  onPressed: onTranscriptExpandPressed,
+                  icon: const Icon(Icons.open_in_full_rounded),
                   color: AppColors.textColor,
-                  size: 20,
+                  iconSize: 20,
                 )
               ],
             ),
-            SizedBox(
+            const SizedBox(
               height: 10,
             ),
-            Expanded(
+            const Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   children: [

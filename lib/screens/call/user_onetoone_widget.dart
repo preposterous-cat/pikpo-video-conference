@@ -131,8 +131,8 @@ class UserWidget extends StatelessWidget {
         .room.localParticipant?.trackPublications.values
         .where((p) => p.participant.identity == participant['identity']);
 
-    bool? isMicActive = micStatus[participant['identity']] ?? true;
-    bool? isVideoActive = videoStatus[participant['identity']] ?? false;
+    bool isMicActive = micStatus[participant['identity']]!;
+    bool isVideoActive = videoStatus[participant['identity']]!;
 
     // var videoTrack =
     //     currentParticipant?.track;

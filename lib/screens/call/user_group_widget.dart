@@ -1,11 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:livekit_client/livekit_client.dart';
+import 'package:pikpo_video_conference/services/livekit_service.dart';
 import 'package:pikpo_video_conference/theme/app_colors.dart';
 
 class UserGroupWidget extends StatelessWidget {
-  final Map<String, dynamic> statusList;
-  const UserGroupWidget({super.key, required this.statusList});
+  final List participants;
+  final LiveKitService livekitService;
+  final Map<String, bool?> micStatus;
+  final Map<String, bool?> videoStatus;
+  const UserGroupWidget(
+      {super.key,
+      required this.participants,
+      required this.livekitService,
+      required this.micStatus,
+      required this.videoStatus});
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +53,7 @@ class UserGroupWidget extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      "You & 6 participants",
+                      "You & ${participants.length - 1} participants",
                       style: TextStyle(
                           color: AppColors.highlightColor, fontSize: textSize),
                     )
@@ -59,34 +69,10 @@ class UserGroupWidget extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       UserWidget(
-                          name: "Arizli R",
-                          isMicActive: statusList['isMicActive'],
-                          isVideoActive: statusList['isVideoActive'],
-                          isPendingConnection: false,
-                          textSize: textSize,
-                          imageSize: imageSize),
-                      UserWidget(
-                          name: "Arizli R",
-                          isMicActive: statusList['isMicActive'],
-                          isVideoActive: statusList['isVideoActive'],
-                          isPendingConnection:
-                              statusList['isPendingConnection'],
-                          textSize: textSize,
-                          imageSize: imageSize),
-                      UserWidget(
-                          name: "Arizli R",
-                          isMicActive: statusList['isMicActive'],
-                          isVideoActive: statusList['isVideoActive'],
-                          isPendingConnection:
-                              statusList['isPendingConnection'],
-                          textSize: textSize,
-                          imageSize: imageSize),
-                      UserWidget(
-                          name: "Arizli R",
-                          isMicActive: statusList['isMicActive'],
-                          isVideoActive: statusList['isVideoActive'],
-                          isPendingConnection:
-                              statusList['isPendingConnection'],
+                          participant: participants[0],
+                          livekitService: livekitService,
+                          micStatus: micStatus,
+                          videoStatus: videoStatus,
                           textSize: textSize,
                           imageSize: imageSize),
                     ],
@@ -104,23 +90,28 @@ class UserGroupWidget extends StatelessWidget {
 class UserWidget extends StatelessWidget {
   const UserWidget({
     super.key,
-    required this.name,
-    required this.isMicActive,
-    required this.isVideoActive,
-    required this.isPendingConnection,
+    required this.participant,
+    required this.livekitService,
+    required this.micStatus,
+    required this.videoStatus,
     required this.textSize,
     required this.imageSize,
   });
 
+  final Map<String, dynamic> participant;
+  final LiveKitService livekitService;
+  final Map<String, bool?> micStatus;
+  final Map<String, bool?> videoStatus;
   final double textSize;
   final double imageSize;
-  final String name;
-  final bool isMicActive;
-  final bool isVideoActive;
-  final bool isPendingConnection;
-
   @override
   Widget build(BuildContext context) {
+    final currentParticipant = livekitService
+        .room.localParticipant?.trackPublications.values
+        .where((p) => p.participant.identity == participant['identity']);
+
+    bool isMicActive = micStatus[participant['identity']]!;
+    bool isVideoActive = videoStatus[participant['identity']]!;
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 15),
       child: Column(
@@ -135,10 +126,8 @@ class UserWidget extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   isVideoActive
-                      ? Image.network(
-                          'https://www.siegemedia.com/wp-content/uploads/2020/12/business-blogs-that-work-03-barkbox.webp',
-                          fit: BoxFit.cover,
-                        )
+                      ? VideoTrackRenderer(
+                          currentParticipant?.firstOrNull?.track as VideoTrack)
                       : Image.asset(
                           'assets/images/blank-profile.png',
                           fit: BoxFit.cover,
@@ -155,7 +144,7 @@ class UserWidget extends StatelessWidget {
                         color: AppColors.textColor,
                       ), // Sesuaikan ukuran sesuai kebutuhan
                     ),
-                  if (isPendingConnection)
+                  if (participant['state'] != 'ACTIVE')
                     Container(
                       color: Colors.white.withOpacity(
                           0.5), // Mengatur warna dan tingkat opacity
@@ -177,7 +166,7 @@ class UserWidget extends StatelessWidget {
             height: textSize * 0.9, // Adjust space between text and image
           ),
           Text(
-            name,
+            participant['identity'],
             style: TextStyle(
               color: AppColors.textColor,
               fontSize: textSize,

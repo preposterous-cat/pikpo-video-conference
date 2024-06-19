@@ -39,8 +39,15 @@ class _LoginWidgetState extends State<LoginWidget> {
 
   /// Navigate to the call screen with the provided call type and username
   Future<void> _routeToCallScreen(CallType type) async {
+    late String roomName;
+    if (type == CallType.oneToOne) {
+      roomName = "onetoone";
+    } else {
+      roomName = "group";
+    }
+
     Map<String, dynamic> isConnected =
-        await _onConnectRoom(); // connecting process to create room
+        await _onConnectRoom(roomName); // connecting process to create room
 
     if (isConnected['status']) {
       final usernameText = _controller.usernameController.text;
@@ -72,13 +79,13 @@ class _LoginWidgetState extends State<LoginWidget> {
     }
   }
 
-  Future<Map<String, dynamic>> _onConnectRoom() async {
+  Future<Map<String, dynamic>> _onConnectRoom(room) async {
     try {
       // Get token
       final serverUrl = dotenv.env['SERVER_URL'];
       final participantName = _controller.usernameController.text;
       final response = await http.get(Uri.parse(
-          "$serverUrl/api/token/getToken?participantName=$participantName"));
+          "$serverUrl/api/token/getToken?participantName={$participantName}&room={$room}"));
 
       if (response.statusCode == 200) {
         final token = response.body;

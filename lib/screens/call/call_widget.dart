@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:pikpo_video_conference/screens/call/chat_controller.dart';
 import 'package:pikpo_video_conference/screens/call/share_screen_widget.dart';
 import 'package:pikpo_video_conference/screens/call/transcript_widget.dart';
 import 'package:pikpo_video_conference/screens/call/user_group_widget.dart';
@@ -9,6 +10,7 @@ import 'package:pikpo_video_conference/services/livekit_service.dart';
 import 'package:pikpo_video_conference/theme/app_colors.dart';
 import 'package:pikpo_video_conference/widgets/custom_dialog_alert.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 import 'call_control_widget.dart';
 import 'navbar_widget.dart';
@@ -40,7 +42,12 @@ class CallWidgetState extends State<CallWidget> {
   bool isShareScreenActive = false;
   bool isSendMessageActive = false;
   bool isPendingConnection = false;
+  bool isTranscriptExpanded = false;
   List participants = [];
+  List<Map<String, String>> chats = [];
+
+  final ChatController controller =
+      ChatController(); // Controller for managing chat state
 
   @override
   void initState() {
@@ -52,6 +59,7 @@ class CallWidgetState extends State<CallWidget> {
 
   @override
   void dispose() {
+    controller.dispose(); // Dispose controller to free up resources
     super.dispose();
   }
 
@@ -66,7 +74,9 @@ class CallWidgetState extends State<CallWidget> {
 
       setState(() {
         participants = newParticipants;
+      });
 
+      setState(() {
         // Initialize mic and video status for each participant
         for (var participant in newParticipants) {
           final identity = participant['identity'];
@@ -153,6 +163,12 @@ class CallWidgetState extends State<CallWidget> {
         .setScreenShareEnabled(isShareScreenActive);
   }
 
+  void onTranscriptExpandHandler() {
+    setState(() {
+      isTranscriptExpanded = !isTranscriptExpanded;
+    });
+  }
+
   /// get all status state
   Map<String, bool?> getStatusList() {
     return {
@@ -181,6 +197,21 @@ class CallWidgetState extends State<CallWidget> {
     };
   }
 
+  void onMessageHandler() {
+    final messageText = controller.messageController.text;
+    final now = DateTime.now();
+    final currentTime = DateFormat('hh:mm a').format(now);
+    final username = widget.username;
+
+    setState(() {
+      chats.add(
+          {"username": username, "time": currentTime, "message": messageText});
+    });
+
+    // clear the text field after adding the message
+    controller.messageController.clear();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -203,27 +234,35 @@ class CallWidgetState extends State<CallWidget> {
                       livekitService: widget.livekitService),
                 ),
               if (participants.isNotEmpty)
-                FutureBuilder<void>(
-                    future: _getListParticipants(),
-                    builder: (context, snapshot) {
-                      return Flexible(
-                        flex: !isShareScreenActive && !isTranscriptActive
-                            ? 2
-                            : 4, // Adjust flex to fit screen based on Share Screen and Transcript
-                        child: widget.type == CallType.oneToOne
-                            ? UserOnetoOneWidget(
-                                participants: participants,
-                                livekitService: widget.livekitService,
-                                micStatus: micStatus,
-                                videoStatus: videoStatus,
-                              )
-                            : UserGroupWidget(statusList: getStatusList()),
-                      );
-                    }),
+                // FutureBuilder<void>(
+                //     future: _getListParticipants(),
+                //     builder: (context, snapshot) {
+                // return
+                Flexible(
+                  flex: !isShareScreenActive && !isTranscriptActive
+                      ? 2
+                      : 4, // Adjust flex to fit screen based on Share Screen and Transcript
+                  child: widget.type == CallType.oneToOne
+                      ? UserOnetoOneWidget(
+                          participants: participants,
+                          livekitService: widget.livekitService,
+                          micStatus: micStatus,
+                          videoStatus: videoStatus,
+                        )
+                      : UserGroupWidget(
+                          participants: participants,
+                          livekitService: widget.livekitService,
+                          micStatus: micStatus,
+                          videoStatus: videoStatus,
+                        ),
+                ),
+              // }),
               if (isTranscriptActive)
-                const Flexible(
-                  flex: 5,
-                  child: TranscriptWidget(),
+                Flexible(
+                  flex: isTranscriptExpanded ? 10 : 5,
+                  child: TranscriptWidget(
+                    onTranscriptExpandPressed: onTranscriptExpandHandler,
+                  ),
                 ),
               CallControlWidget(
                   handlerList: getHandlerList(), statusList: getStatusList())
@@ -301,8 +340,9 @@ class CallWidgetState extends State<CallWidget> {
               ),
               Column(
                 children: [
-                  const TextField(
-                    decoration: InputDecoration(
+                  TextField(
+                    controller: controller.messageController,
+                    decoration: const InputDecoration(
                         hintText: "Write a message",
                         hintStyle: TextStyle(color: Color(0xFFDBDBDB)),
                         border: InputBorder.none),
@@ -350,9 +390,7 @@ class CallWidgetState extends State<CallWidget> {
                           Icons.send_outlined,
                           color: Colors.black,
                         ),
-                        onPressed: () {
-                          // Handle send message
-                        },
+                        onPressed: onMessageHandler,
                       ),
                     ],
                   ),
@@ -366,6 +404,16 @@ class CallWidgetState extends State<CallWidget> {
   }
 
   Widget _buildChatContainer() {
+    List<Widget> _buildChatList() {
+      return chats.map((chat) {
+        return UserChat(
+          username: chat['username']!,
+          time: chat['time']!,
+          message: chat['message']!,
+        );
+      }).toList();
+    }
+
     return AnimatedPositioned(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
@@ -406,15 +454,12 @@ class CallWidgetState extends State<CallWidget> {
                   ),
                 ),
               ),
-              const Expanded(
+              Expanded(
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
-                      UserChat(),
-                      UserChat(),
-                      UserChat(),
-                      UserChat(),
-                      SizedBox(height: 150),
+                      ..._buildChatList(),
+                      const SizedBox(height: 150),
                     ],
                   ),
                 ),
@@ -428,9 +473,15 @@ class CallWidgetState extends State<CallWidget> {
 }
 
 class UserChat extends StatelessWidget {
-  const UserChat({
-    super.key,
-  });
+  final String username;
+  final String time;
+  final String message;
+
+  const UserChat(
+      {super.key,
+      required this.username,
+      required this.time,
+      required this.message});
 
   @override
   Widget build(BuildContext context) {
@@ -455,7 +506,7 @@ class UserChat extends StatelessWidget {
           const SizedBox(
             width: 10,
           ),
-          const Expanded(
+          Expanded(
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -464,23 +515,23 @@ class UserChat extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        "User",
-                        style: TextStyle(
+                        username,
+                        style: const TextStyle(
                             fontWeight: FontWeight.w600, fontSize: 22),
                       ),
-                      SizedBox(
+                      const SizedBox(
                         width: 50,
                       ),
                       Text(
-                        ".10:15PM",
-                        style: TextStyle(
+                        time,
+                        style: const TextStyle(
                             fontWeight: FontWeight.w400, fontSize: 18),
                       )
                     ],
                   ),
                   Text(
-                    "Lorem Ipsum sit dolot amettt Lorem Ipsum sit dolot amettt Lorem Ipsum sit dolot amettt Lorem Ipsum sit dolot amettt",
-                    style: TextStyle(
+                    message,
+                    style: const TextStyle(
                         color: AppColors.backgroundColor,
                         fontSize: 16,
                         overflow: TextOverflow.clip),
