@@ -79,13 +79,18 @@ class _LoginWidgetState extends State<LoginWidget> {
     }
   }
 
-  Future<Map<String, dynamic>> _onConnectRoom(room) async {
+  Future<Map<String, dynamic>> _onConnectRoom(String room) async {
     try {
       // Get token
       final serverUrl = dotenv.env['SERVER_URL'];
       final participantName = _controller.usernameController.text;
-      final response = await http.get(Uri.parse(
-          "$serverUrl/api/token/getToken?participantName={$participantName}&room={$room}"));
+      final response = await http.get(
+        Uri.parse(
+            "$serverUrl/api/token/getToken?participantName=$participantName&room=$room"),
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+        },
+      );
 
       if (response.statusCode == 200) {
         final token = response.body;

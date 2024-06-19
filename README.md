@@ -1,16 +1,43 @@
-# pikpo_video_conference
+# Flutter Video Conference App
 
-A new Flutter project.
+This is a Flutter project for a video conferencing application.
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+### Prerequisites
 
-A few resources to get you started if this is your first Flutter project:
+- Flutter SDK: [Installation Guide](https://flutter.dev/docs/get-started/install)
+- An IDE such as Visual Studio Code or Android Studio
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### Installation
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/preposterous-cat/pikpo-video-conference.git
+   cd pikpo-video-conference
+   ```
+2. Install the required dependencies:
+   ```bash
+   flutter pub get
+   ```
+
+### Running the App
+
+To run the app on your connected device or emulator, use the following command:
+```bash
+flutter run
+
+### Running Tests
+
+To run the tests for the project, use the following command:
+```bash
+flutter test
+
+### Backend URL
+
+The backend for this project is deployed and can be accessed at: https://pikpo-video-conference-be.vercel.app
+
+### Additional Notes
+
+- Ensure your device or emulator has internet connectivity to interact with the backend services.
+- The app is primarily tested on Android devices due to hardware constraints.

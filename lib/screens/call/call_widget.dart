@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pikpo_video_conference/screens/call/chat_controller.dart';
@@ -16,25 +15,28 @@ import 'call_control_widget.dart';
 import 'navbar_widget.dart';
 import 'user_onetoone_widget.dart';
 
+/// Enum that defines the types of calls.
 enum CallType { oneToOne, group }
 
+/// Widget that represents a call screen.
 class CallWidget extends StatefulWidget {
   final String username;
   final CallType type;
   final LiveKitService livekitService;
 
-  const CallWidget(
-      {super.key,
-      required this.username,
-      required this.type,
-      required this.livekitService});
+  /// Creates a [CallWidget].
+  const CallWidget({
+    super.key,
+    required this.username,
+    required this.type,
+    required this.livekitService,
+  });
 
   @override
   State<CallWidget> createState() => CallWidgetState();
 }
 
 class CallWidgetState extends State<CallWidget> {
-  // Additional state for each participant
   final Map<String, bool?> micStatus = {};
   final Map<String, bool?> videoStatus = {};
   bool isTranscriptActive = false;
@@ -45,26 +47,22 @@ class CallWidgetState extends State<CallWidget> {
   bool isTranscriptExpanded = false;
   List participants = [];
   List<Map<String, String>> chats = [];
-
-  final ChatController controller =
-      ChatController(); // Controller for managing chat state
+  final ChatController controller = ChatController();
 
   @override
   void initState() {
     super.initState();
-    // Initialize any necessary data or state here
-
     _getListParticipants();
   }
 
   @override
   void dispose() {
-    controller.dispose(); // Dispose controller to free up resources
+    controller.dispose();
     super.dispose();
   }
 
+  /// Fetches the list of participants from the server.
   Future<void> _getListParticipants() async {
-    // Get token
     final serverUrl = dotenv.env['SERVER_URL'];
     final response = await http
         .get(Uri.parse("$serverUrl/api/participant/getListParticipants"));
@@ -77,7 +75,6 @@ class CallWidgetState extends State<CallWidget> {
       });
 
       setState(() {
-        // Initialize mic and video status for each participant
         for (var participant in newParticipants) {
           final identity = participant['identity'];
           final currentParticipant = widget
@@ -93,7 +90,7 @@ class CallWidgetState extends State<CallWidget> {
     }
   }
 
-  /// Displays a dialog to confirm room disconnection
+  /// Displays a dialog to confirm room disconnection.
   void _onDisconnectRoom() {
     showDialog(
       context: context,
@@ -103,12 +100,10 @@ class CallWidgetState extends State<CallWidget> {
           title: "Warning",
           content: "Are you sure you want to leave the room?",
           onConfirm: () async {
-            // Handle confirm action
             await widget.livekitService.disconnectRoom();
             Navigator.popUntil(context, ModalRoute.withName('/'));
           },
           onCancel: () {
-            // Handle cancel action
             Navigator.of(context).pop();
           },
         );
@@ -116,12 +111,12 @@ class CallWidgetState extends State<CallWidget> {
     );
   }
 
-  /// Toggles microphone state
+  /// Toggles microphone state for a given participant.
   void _onMicHandler(String identity) {
     setState(() {
       micStatus[identity] = !micStatus[identity]!;
     });
-    // Find the corresponding participant and set microphone enabled/disabled
+
     final currentParticipant = widget
         .livekitService.room.localParticipant?.trackPublications.values
         .where((p) => p.participant.identity == identity);
@@ -130,31 +125,33 @@ class CallWidgetState extends State<CallWidget> {
         .setMicrophoneEnabled(micStatus[identity]!);
   }
 
+  /// Toggles video state for a given participant.
   void _onVideoHandler(String identity) {
     setState(() {
       videoStatus[identity] = !videoStatus[identity]!;
     });
   }
 
-  /// Toggles transcript state
+  /// Toggles transcript state.
   void _onTranscriptHandler() {
     setState(() {
       isTranscriptActive = !isTranscriptActive;
     });
   }
 
-  /// Toggles chat state
+  /// Toggles chat state.
   void _onChatHandler() {
     setState(() {
       isSendMessageActive = !isSendMessageActive;
     });
   }
 
-  /// Toggles share screen state
+  /// Toggles share screen state.
   void _onShareScreenHandler() {
     setState(() {
       isShareScreenActive = !isShareScreenActive;
     });
+
     final currentParticipant = widget
         .livekitService.room.localParticipant?.trackPublications.values
         .where((p) => p.participant.identity == widget.username);
@@ -163,13 +160,14 @@ class CallWidgetState extends State<CallWidget> {
         .setScreenShareEnabled(isShareScreenActive);
   }
 
+  /// Toggles transcript expansion state.
   void onTranscriptExpandHandler() {
     setState(() {
       isTranscriptExpanded = !isTranscriptExpanded;
     });
   }
 
-  /// get all status state
+  /// Returns a map containing the status of various features.
   Map<String, bool?> getStatusList() {
     return {
       "isMicActive": micStatus[widget.username] ?? true,
@@ -182,7 +180,7 @@ class CallWidgetState extends State<CallWidget> {
     };
   }
 
-  /// get all status state
+  /// Returns a map containing callbacks for various handlers.
   Map<String, VoidCallback> getHandlerList() {
     return {
       "onMicPressed": () {
@@ -197,6 +195,7 @@ class CallWidgetState extends State<CallWidget> {
     };
   }
 
+  /// Handles the sending of a chat message.
   void onMessageHandler() {
     final messageText = controller.messageController.text;
     final now = DateTime.now();
@@ -208,7 +207,6 @@ class CallWidgetState extends State<CallWidget> {
           {"username": username, "time": currentTime, "message": messageText});
     });
 
-    // clear the text field after adding the message
     controller.messageController.clear();
   }
 
@@ -234,14 +232,8 @@ class CallWidgetState extends State<CallWidget> {
                       livekitService: widget.livekitService),
                 ),
               if (participants.isNotEmpty)
-                // FutureBuilder<void>(
-                //     future: _getListParticipants(),
-                //     builder: (context, snapshot) {
-                // return
                 Flexible(
-                  flex: !isShareScreenActive && !isTranscriptActive
-                      ? 2
-                      : 4, // Adjust flex to fit screen based on Share Screen and Transcript
+                  flex: !isShareScreenActive && !isTranscriptActive ? 2 : 4,
                   child: widget.type == CallType.oneToOne
                       ? UserOnetoOneWidget(
                           participants: participants,
@@ -256,7 +248,6 @@ class CallWidgetState extends State<CallWidget> {
                           videoStatus: videoStatus,
                         ),
                 ),
-              // }),
               if (isTranscriptActive)
                 Flexible(
                   flex: isTranscriptExpanded ? 10 : 5,
@@ -275,6 +266,7 @@ class CallWidgetState extends State<CallWidget> {
     );
   }
 
+  /// Builds the container for sending messages.
   Widget _buildSendMessageContainer() {
     return AnimatedPositioned(
       duration: const Duration(milliseconds: 300),
@@ -300,10 +292,7 @@ class CallWidgetState extends State<CallWidget> {
             boxShadow: [
               BoxShadow(
                 color: Colors.grey,
-                offset: Offset(
-                  5.0,
-                  5.0,
-                ),
+                offset: Offset(5.0, 5.0),
                 blurRadius: 10.0,
                 spreadRadius: 2.0,
               ),
@@ -386,11 +375,11 @@ class CallWidgetState extends State<CallWidget> {
                             shape: const CircleBorder(),
                             padding: const EdgeInsets.all(5),
                             backgroundColor: const Color(0xFFDADADA)),
+                        onPressed: onMessageHandler,
                         child: const Icon(
                           Icons.send_outlined,
                           color: Colors.black,
                         ),
-                        onPressed: onMessageHandler,
                       ),
                     ],
                   ),
@@ -403,8 +392,9 @@ class CallWidgetState extends State<CallWidget> {
     );
   }
 
+  /// Builds the container for displaying chat messages.
   Widget _buildChatContainer() {
-    List<Widget> _buildChatList() {
+    List<Widget> buildChatList() {
       return chats.map((chat) {
         return UserChat(
           username: chat['username']!,
@@ -458,7 +448,7 @@ class CallWidgetState extends State<CallWidget> {
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
-                      ..._buildChatList(),
+                      ...buildChatList(),
                       const SizedBox(height: 150),
                     ],
                   ),
@@ -472,16 +462,19 @@ class CallWidgetState extends State<CallWidget> {
   }
 }
 
+/// Widget that represents a single chat message.
 class UserChat extends StatelessWidget {
   final String username;
   final String time;
   final String message;
 
-  const UserChat(
-      {super.key,
-      required this.username,
-      required this.time,
-      required this.message});
+  /// Creates a [UserChat] widget.
+  const UserChat({
+    super.key,
+    required this.username,
+    required this.time,
+    required this.message,
+  });
 
   @override
   Widget build(BuildContext context) {
