@@ -64,8 +64,12 @@ class CallWidgetState extends State<CallWidget> {
   /// Fetches the list of participants from the server.
   Future<void> _getListParticipants() async {
     final serverUrl = dotenv.env['SERVER_URL'];
-    final response = await http
-        .get(Uri.parse("$serverUrl/api/participant/getListParticipants"));
+    String roomName = 'onetoone';
+    if (widget.type == CallType.group) {
+      roomName = 'group';
+    }
+    final response = await http.get(Uri.parse(
+        "$serverUrl/api/participant/getListParticipants?room=$roomName"));
 
     if (response.statusCode == 200) {
       final newParticipants = jsonDecode(response.body);

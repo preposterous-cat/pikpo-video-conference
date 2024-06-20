@@ -87,9 +87,6 @@ class _LoginWidgetState extends State<LoginWidget> {
       final response = await http.get(
         Uri.parse(
             "$serverUrl/api/token/getToken?participantName=$participantName&room=$room"),
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-        },
       );
 
       if (response.statusCode == 200) {
