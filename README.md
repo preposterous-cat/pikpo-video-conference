@@ -24,14 +24,16 @@ This is a Flutter project for a video conferencing application.
 ### Running the App
 
 To run the app on your connected device or emulator, use the following command:
-```bash
-flutter run
+  ```bash
+  flutter run
+  ```
 
 ### Running Tests
 
 To run the tests for the project, use the following command:
-```bash
-flutter test
+ ```bash
+   flutter test
+   ```
 
 ### Backend URL
 
