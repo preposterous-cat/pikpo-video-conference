@@ -37,7 +37,8 @@ To run the tests for the project, use the following command:
 
 ### Backend URL
 
-The backend for this project is deployed and can be accessed at: https://pikpo-video-conference-be.vercel.app
+- The backend for this project is deployed and can be accessed at: https://pikpo-video-conference-be.vercel.app
+- The Github for backend can be accessed at: https://github.com/preposterous-cat/pikpo-video-conference-be
 
 ### Additional Notes
 
